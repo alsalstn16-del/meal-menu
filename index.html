@@ -1,0 +1,483 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>우리 반 월간 급식표</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, "Malgun Gothic", sans-serif;
+  background: #f3f7ff;
+  margin: 0;
+  padding: 20px;
+  color: #333;
+}
+
+.container {
+  max-width: 1100px;
+  margin: auto;
+}
+
+h1 {
+  text-align: center;
+  color: #4267b2;
+}
+
+.subtitle {
+  text-align: center;
+  color: #666;
+}
+
+.top {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin: 25px 0;
+}
+
+button {
+  border: none;
+  background: #5278d8;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #3459b8;
+}
+
+.weekdays, #calendar {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.weekdays div {
+  background: #5278d8;
+  color: white;
+  padding: 12px 2px;
+  text-align: center;
+  border-radius: 8px;
+  font-weight: bold;
+}
+
+.day {
+  min-height: 180px;
+  padding: 8px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #dce4f5;
+  overflow-wrap: anywhere;
+}
+
+.day.empty {
+  background: #e9eef8;
+}
+
+.date {
+  font-weight: bold;
+  color: #4267b2;
+  margin-bottom: 8px;
+}
+
+.meal img {
+  width: 100%;
+  max-height: 120px;
+  object-fit: cover;
+  border-radius: 7px;
+  margin-top: 6px;
+}
+
+.meal p {
+  margin: 5px 0;
+  font-size: 14px;
+  white-space: pre-line;
+}
+
+.meal button {
+  padding: 6px 8px;
+  margin: 4px 2px 0 0;
+  font-size: 12px;
+}
+
+.delete {
+  background: #e45b67;
+}
+
+.editor {
+  background: white;
+  padding: 20px;
+  margin-top: 25px;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px #dce3f0;
+}
+
+.editor h2 {
+  margin-top: 0;
+  color: #4267b2;
+}
+
+label {
+  display: block;
+  margin-top: 12px;
+  font-weight: bold;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ccd5e5;
+  border-radius: 7px;
+  font: inherit;
+}
+
+textarea {
+  min-height: 75px;
+  resize: vertical;
+}
+
+.save {
+  margin-top: 18px;
+  width: 100%;
+  padding: 13px;
+  font-size: 16px;
+}
+
+.notice {
+  color: #666;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 8px;
+  }
+
+  .weekdays, #calendar {
+    gap: 3px;
+  }
+
+  .day {
+    min-height: 125px;
+    padding: 4px;
+  }
+
+  .meal p {
+    font-size: 11px;
+  }
+
+  .top {
+    gap: 8px;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <h1>🍱 우리 반 월간 급식표</h1>
+  <p class="subtitle">이번 달 맛있는 급식을 확인해 보세요!</p>
+
+  <div class="top">
+    <button onclick="changeMonth(-1)">◀ 이전 달</button>
+    <h2 id="monthTitle"></h2>
+    <button onclick="changeMonth(1)">다음 달 ▶</button>
+  </div>
+
+  <div class="weekdays">
+    <div>월요일</div>
+    <div>화요일</div>
+    <div>수요일</div>
+    <div>목요일</div>
+    <div>금요일</div>
+  </div>
+
+  <div id="calendar"></div>
+
+  <section class="editor">
+    <h2>✏️ 급식 직접 등록하기</h2>
+
+    <label for="mealDate">급식 날짜</label>
+    <input type="date" id="mealDate" required>
+
+    <label for="mealName">오늘의 메뉴</label>
+    <textarea id="mealName"
+      placeholder="예: 김치볶음밥&#10;미역국&#10;돈가스&#10;깍두기"></textarea>
+
+    <label for="calories">칼로리 (kcal)</label>
+    <input type="number" id="calories"
+      placeholder="예: 750" min="0">
+
+    <label for="allergens">알레르기 정보</label>
+    <input type="text" id="allergens"
+      placeholder="예: 달걀, 우유, 밀, 대두">
+
+    <label for="mealImage">음식 사진</label>
+    <input type="file" id="mealImage" accept="image/*">
+
+    <p class="notice">
+      사진을 선택하지 않으면 기존 사진이 유지됩니다.
+      다른 사진을 등록하려면 새 사진을 선택하세요.
+    </p>
+
+    <button class="save" onclick="saveMeal()">💾 급식 저장하기</button>
+    <button class="delete" onclick="clearForm()">입력 내용 지우기</button>
+  </section>
+
+  <p class="notice">
+    ※ 급식 정보는 이 브라우저에 저장됩니다.
+    다른 기기나 브라우저에서는 자동으로 공유되지 않습니다.
+  </p>
+</div>
+
+<script>
+let currentDate = new Date();
+let meals = {};
+let editingDate = null;
+
+try {
+  meals = JSON.parse(
+    localStorage.getItem("classMeals") || "{}"
+  );
+} catch (error) {
+  meals = {};
+}
+
+function dateKey(year, month, day) {
+  return year + "-" +
+    String(month + 1).padStart(2, "0") + "-" +
+    String(day).padStart(2, "0");
+}
+
+function renderCalendar() {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  document.getElementById("monthTitle").textContent =
+    year + "년 " + (month + 1) + "월";
+
+  const calendar = document.getElementById("calendar");
+  calendar.innerHTML = "";
+
+  const firstDay = new Date(year, month, 1);
+  const totalDays = new Date(year, month + 1, 0).getDate();
+
+  // 월요일 시작 기준으로 첫 날짜의 위치 계산
+  let startOffset = (firstDay.getDay() + 6) % 7;
+
+  // 달력은 월~금만 표시
+  let schoolDaysBefore = 0;
+  for (let i = 0; i < startOffset; i++) {
+    if (i < 5) schoolDaysBefore++;
+  }
+
+  for (let i = 0; i < schoolDaysBefore; i++) {
+    const empty = document.createElement("div");
+    empty.className = "day empty";
+    calendar.appendChild(empty);
+  }
+
+  for (let day = 1; day <= totalDays; day++) {
+    const date = new Date(year, month, day);
+    const weekday = date.getDay();
+
+    // 토요일(6), 일요일(0)은 제외
+    if (weekday === 0 || weekday === 6) continue;
+
+    const key = dateKey(year, month, day);
+    const meal = meals[key];
+
+    const cell = document.createElement("div");
+    cell.className = "day";
+
+    const dateLabel = document.createElement("div");
+    dateLabel.className = "date";
+    dateLabel.textContent = day + "일";
+    cell.appendChild(dateLabel);
+
+    if (meal) {
+      const content = document.createElement("div");
+      content.className = "meal";
+
+      const menu = document.createElement("p");
+      menu.textContent = meal.name || "메뉴 미입력";
+      content.appendChild(menu);
+
+      if (meal.image) {
+        const img = document.createElement("img");
+        img.src = meal.image;
+        img.alt = "급식 사진";
+        content.appendChild(img);
+      }
+
+      if (meal.calories !== "") {
+        const kcal = document.createElement("p");
+        kcal.textContent = "🔥 " + meal.calories + " kcal";
+        content.appendChild(kcal);
+      }
+
+      if (meal.allergens) {
+        const allergy = document.createElement("p");
+        allergy.textContent = "⚠️ " + meal.allergens;
+        content.appendChild(allergy);
+      }
+
+      const editButton = document.createElement("button");
+      editButton.textContent = "수정";
+      editButton.onclick = () => editMeal(key);
+      content.appendChild(editButton);
+
+      const deleteButton = document.createElement("button");
+      deleteButton.textContent = "삭제";
+      deleteButton.className = "delete";
+      deleteButton.onclick = () => deleteMeal(key);
+      content.appendChild(deleteButton);
+
+      cell.appendChild(content);
+    } else {
+      const emptyText = document.createElement("p");
+      emptyText.textContent = "등록된 급식 없음";
+      emptyText.style.color = "#aaa";
+      emptyText.style.fontSize = "12px";
+      cell.appendChild(emptyText);
+
+      const addButton = document.createElement("button");
+      addButton.textContent = "+ 등록";
+      addButton.onclick = () => {
+        document.getElementById("mealDate").value = key;
+        document.getElementById("mealDate").scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+      };
+      cell.appendChild(addButton);
+    }
+
+    calendar.appendChild(cell);
+  }
+}
+
+function saveMeal() {
+  const date = document.getElementById("mealDate").value;
+  const name = document.getElementById("mealName").value.trim();
+  const calories = document.getElementById("calories").value;
+  const allergens = document.getElementById("allergens").value.trim();
+  const file = document.getElementById("mealImage").files[0];
+
+  if (!date) {
+    alert("급식 날짜를 선택해 주세요.");
+    return;
+  }
+
+  if (!name) {
+    alert("급식 메뉴를 입력해 주세요.");
+    return;
+  }
+
+  const selectedDate = new Date(date + "T12:00:00");
+  if (selectedDate.getDay() === 0 ||
+      selectedDate.getDay() === 6) {
+    alert("월요일부터 금요일까지만 등록할 수 있어요.");
+    return;
+  }
+
+  const oldMeal = meals[date] || {};
+
+  function finishSave(image) {
+    meals[date] = {
+      name: name,
+      calories: calories,
+      allergens: allergens,
+      image: image || ""
+    };
+
+    try {
+      localStorage.setItem("classMeals", JSON.stringify(meals));
+      currentDate = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        1
+      );
+      clearForm();
+      renderCalendar();
+      alert("급식이 저장되었습니다!");
+    } catch (error) {
+      alert("저장 공간이 부족할 수 있어요. 사진 크기를 줄여 다시 시도해 주세요.");
+    }
+  }
+
+  if (file) {
+    if (!file.type.startsWith("image/")) {
+      alert("이미지 파일만 선택할 수 있어요.");
+      return;
+    }
+
+    // 큰 사진으로 인한 저장 공간 부족을 방지
+    if (file.size > 2 * 1024 * 1024) {
+      alert("사진은 2MB 이하로 선택해 주세요.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => finishSave(reader.result);
+    reader.onerror = () => alert("사진을 읽지 못했습니다.");
+    reader.readAsDataURL(file);
+  } else {
+    finishSave(oldMeal.image || "");
+  }
+}
+
+function editMeal(key) {
+  const meal = meals[key];
+  if (!meal) return;
+
+  document.getElementById("mealDate").value = key;
+  document.getElementById("mealName").value = meal.name || "";
+  document.getElementById("calories").value = meal.calories || "";
+  document.getElementById("allergens").value = meal.allergens || "";
+  document.getElementById("mealImage").value = "";
+
+  editingDate = key;
+
+  document.querySelector(".editor").scrollIntoView({
+    behavior: "smooth"
+  });
+}
+
+function deleteMeal(key) {
+  if (!confirm(key + " 급식 정보를 삭제할까요?")) return;
+
+  delete meals[key];
+  localStorage.setItem("classMeals", JSON.stringify(meals));
+  renderCalendar();
+}
+
+function clearForm() {
+  document.getElementById("mealDate").value = "";
+  document.getElementById("mealName").value = "";
+  document.getElementById("calories").value = "";
+  document.getElementById("allergens").value = "";
+  document.getElementById("mealImage").value = "";
+  editingDate = null;
+}
+
+function changeMonth(amount) {
+  currentDate.setMonth(currentDate.getMonth() + amount);
+  renderCalendar();
+}
+
+renderCalendar();
+</script>
+</body>
+</html>
